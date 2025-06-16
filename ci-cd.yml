@@ -1,0 +1,59 @@
+name: CI/CD - gestion-inventario-devops
+
+on:
+  push:
+    branches:
+      - main
+      - Fernando-QA
+  pull_request:
+    branches:
+      - main
+      - Fernando-QA
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gestion_inventario
+        ports:
+          - 5432:5432
+
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Jest tests
+        run: npm test
+
+      - name: Log in to Docker Hub
+        run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t gestion-inventario .
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker tag gestion-inventario:latest ${{ secrets.DOCKERHUB_USERNAME }}/gestion-inventario:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/gestion-inventario:latest
+
+      - name: Deploy to Vercel
+        run: vercel --token ${{ secrets.VERCEL_TOKEN }} --prod
