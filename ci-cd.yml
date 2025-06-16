@@ -1,12 +1,14 @@
-name: CI/CD - gestion-inventario-devops-dev
+name: CI/CD - gestion-inventario-devops
 
 on:
   push:
     branches:
-      - dev
+      - main
+      - Fernando-QA
   pull_request:
     branches:
-      - dev
+      - main
+      - Fernando-QA
 
 jobs:
   build:
@@ -50,8 +52,8 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: |
-          docker tag gestion-inventario:latest ${{ secrets.DOCKERHUB_USERNAME }}/gestion-inventario-dev:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/gestion-inventario-dev:latest
+          docker tag gestion-inventario:latest ${{ secrets.DOCKERHUB_USERNAME }}/gestion-inventario:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/gestion-inventario:latest
 
-      - name: Deploy to Vercel (Dev)
-        run: vercel --token ${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to Vercel
+        run: vercel --token ${{ secrets.VERCEL_TOKEN }} --prod
